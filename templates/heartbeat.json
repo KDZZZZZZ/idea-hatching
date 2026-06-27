@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "mode": "periodic",
+  "every": "30m",
+  "workspace": "~/idea-hatching",
+  "logFile": "~/idea-hatching/heartbeat.log",
+  "lockFile": "~/idea-hatching/heartbeat.lock",
+  "notify": {
+    "hatched": true,
+    "blocked": true,
+    "configError": true,
+    "routineAdvance": false
+  },
+  "singleFlight": true
+}
