@@ -11,6 +11,7 @@ import json
 import os
 import platform
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -110,12 +111,30 @@ def release_lock(cfg: dict) -> None:
         pass
 
 
+def resolve_claude_command() -> str | None:
+    env = os.environ.get("IDEA_HATCHING_CLAUDE_COMMAND")
+    if env:
+        return env
+    names = ["claude"]
+    if platform.system().lower().startswith("win"):
+        # Python subprocess(shell=False) cannot execute PowerShell .ps1 wrappers directly.
+        # Prefer npm's .cmd shim or the real executable.
+        names = ["claude.cmd", "claude.exe", "claude.bat", "claude"]
+    for name in names:
+        path = shutil.which(name)
+        if path and not path.lower().endswith(".ps1"):
+            return path
+    return shutil.which("claude")
+
+
 def default_advance_command() -> list[str]:
     env = os.environ.get("IDEA_HATCHING_ADVANCE_COMMAND")
     if env:
         return shlex.split(env)
-    # Claude Code print mode. Users may override with IDEA_HATCHING_ADVANCE_COMMAND.
-    return ["claude", "-p", "/idea-hatching advance"]
+    claude = resolve_claude_command()
+    if not claude:
+        raise FileNotFoundError("Claude Code CLI not found on PATH. Set IDEA_HATCHING_CLAUDE_COMMAND or ensure claude.cmd/claude.exe is available.")
+    return [claude, "-p", "/idea-hatching advance"]
 
 
 def run_once(cfg: dict, dry_run: bool = False) -> int:
@@ -142,6 +161,39 @@ def run_once(cfg: dict, dry_run: bool = False) -> int:
         release_lock(cfg)
 
 
+def check_connectivity(cfg: dict) -> int:
+    """Check local CLI resolution and live Claude Code connectivity."""
+    claude = resolve_claude_command()
+    ok = True
+    print("--- Idea Hatching Auto Mode check ---")
+    if not claude:
+        print("FAIL claude_cli: not found on PATH")
+        return 2
+    print(f"OK claude_cli: {claude}")
+    try:
+        version = subprocess.run([claude, "--version"], capture_output=True, text=True, timeout=30)
+        if version.returncode == 0:
+            print("OK claude_version: " + (version.stdout or version.stderr).strip()[:200])
+        else:
+            ok = False
+            print("FAIL claude_version: " + ((version.stdout or "") + (version.stderr or "")).strip()[:500])
+    except Exception as e:
+        ok = False
+        print(f"FAIL claude_version: {e}")
+    try:
+        probe = subprocess.run([claude, "-p", "Reply exactly IDEA_HATCHING_CHECK_OK"], capture_output=True, text=True, timeout=parse_interval(cfg.get("checkTimeout", "5m")))
+        out = ((probe.stdout or "") + (probe.stderr or "")).strip()
+        if probe.returncode == 0 and "IDEA_HATCHING_CHECK_OK" in out:
+            print("OK claude_live: received IDEA_HATCHING_CHECK_OK")
+        else:
+            ok = False
+            print(f"FAIL claude_live: exit={probe.returncode} output={out[:1000]}")
+    except Exception as e:
+        ok = False
+        print(f"FAIL claude_live: {e}")
+    return 0 if ok else 2
+
+
 def status(cfg: dict) -> int:
     lock = expand(cfg.get("lockFile", str(ROOT / "heartbeat.lock")))
     log_file = expand(cfg.get("logFile", str(ROOT / "heartbeat.log")))
@@ -152,6 +204,7 @@ def status(cfg: dict) -> int:
         "workspace": cfg.get("workspace"),
         "lockExists": lock.exists(),
         "logFile": str(log_file),
+        "claudeCommand": resolve_claude_command(),
     }, ensure_ascii=False, indent=2))
     if log_file.exists():
         lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()[-5:]
@@ -247,6 +300,7 @@ def main() -> int:
     p.add_argument("--once", action="store_true")
     p.add_argument("--loop", action="store_true")
     p.add_argument("--status", action="store_true")
+    p.add_argument("--check", action="store_true")
     p.add_argument("--enable", action="store_true")
     p.add_argument("--install-scheduler", action="store_true")
     p.add_argument("--uninstall-scheduler", action="store_true")
@@ -267,6 +321,8 @@ def main() -> int:
 
     if args.status:
         return status(cfg)
+    if args.check:
+        return check_connectivity(cfg)
     if args.install_scheduler:
         return install_scheduler(cfg, config_path, args.dry_run)
     if args.uninstall_scheduler:

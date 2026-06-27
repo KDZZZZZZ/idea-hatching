@@ -216,6 +216,7 @@ Behavior:
 - Shows heartbeat config.
 - Shows whether a lock exists.
 - Shows the heartbeat log path.
+- Shows the resolved Claude Code CLI command when available.
 - Prints the last few heartbeat log lines.
 
 ### Stop Auto Mode
@@ -236,6 +237,14 @@ Behavior:
 ## Development
 
 For maintainers only:
+
+```bash
+python scripts/heartbeat.py --check
+```
+
+Checks whether the local Claude Code CLI can be resolved and can complete a live `claude -p` probe.
+
+
 
 ```bash
 python scripts/package.py --check

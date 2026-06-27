@@ -32,7 +32,7 @@ Idea Hatching stores every idea globally, advances it in small trustworthy incre
 Use scripts through `${CLAUDE_SKILL_DIR}/scripts/...` when deterministic filesystem or scheduler work is needed.
 
 - `scripts/init_workspace.py` initializes `~/idea-hatching/` and can hatch one idea without LLM reasoning.
-- `scripts/heartbeat.py` implements Auto Hatch heartbeat: `--enable`, `--install-scheduler`, `--once`, `--loop`, `--status`, `--stop`, `--dry-run`.
+- `scripts/heartbeat.py` implements Auto Hatch heartbeat: `--enable`, `--install-scheduler`, `--check`, `--once`, `--loop`, `--status`, `--stop`, `--dry-run`.
 - `scripts/install.ps1` installs/syncs the skill on Windows; Auto Mode is configured separately through `heartbeat.py`.
 - `scripts/install.sh` installs/syncs the skill on macOS/Linux; Auto Mode is configured separately through `heartbeat.py`.
 - `scripts/package.py` validates the skill structure and can sync files.
