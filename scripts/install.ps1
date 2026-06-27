@@ -1,4 +1,5 @@
 param(
+  [switch]$Auto,
   [ValidateSet('periodic','always')][string]$Mode = 'periodic',
   [string]$Every = '30m',
   [switch]$Uninstall,
@@ -8,9 +9,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $SkillDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$HomeDir = [Environment]::GetFolderPath('UserProfile')
-$ClaudeSkillDir = Join-Path $HomeDir '.claude\skills\idea-hatching'
-$Workspace = Join-Path $HomeDir 'idea-hatching'
 $Heartbeat = Join-Path $SkillDir 'scripts\heartbeat.py'
 $TaskPeriodic = 'IdeaHatchingPeriodic'
 $TaskAlways = 'IdeaHatchingAlways'
@@ -45,14 +43,25 @@ if ($Uninstall) {
   exit 0
 }
 
-Copy-Skill
-python (Join-Path $SkillDir 'scripts\init_workspace.py') | Out-Null
-python $Heartbeat --mode $Mode --every $Every --status | Out-Null
-
 if ($DryRun) {
-  Write-Output "DRY RUN: would install Auto Hatch mode=$Mode every=$Every"
+  if ($Auto) {
+    Write-Output "DRY RUN: would enable Auto Hatch mode=$Mode every=$Every"
+  } else {
+    Write-Output 'DRY RUN: would install/sync the skill and initialize ~/idea-hatching only. Auto Mode would remain off.'
+  }
   exit 0
 }
+
+Copy-Skill
+python (Join-Path $SkillDir 'scripts\init_workspace.py') | Out-Null
+
+if (-not $Auto) {
+  Write-Output 'Installed Idea Hatching skill and initialized workspace. Auto Mode is off.'
+  exit 0
+}
+
+python $Heartbeat --mode $Mode --every $Every --status | Out-Null
+
 
 Remove-Tasks
 $Python = (Get-Command python).Source
@@ -63,8 +72,8 @@ if ($Mode -eq 'periodic') {
   elseif ($Every -match '^(\d+)d$') { $minutes = [int]$Matches[1] * 1440 }
   else { throw 'Windows periodic scheduler currently supports m/h/d intervals, e.g. 30m, 2h, 1d' }
   schtasks /Create /TN $TaskPeriodic /SC MINUTE /MO $minutes /TR "`"$Python`" `"$Heartbeat`" --once" /F | Out-Null
-  Write-Output "Installed $TaskPeriodic every $Every."
+  Write-Output "Enabled Auto Hatch: $TaskPeriodic every $Every."
 } else {
   schtasks /Create /TN $TaskAlways /SC ONLOGON /TR "`"$Python`" `"$Heartbeat`" --loop" /F | Out-Null
-  Write-Output "Installed $TaskAlways on logon with cooldown $Every."
+  Write-Output "Enabled Auto Hatch: $TaskAlways on logon with cooldown $Every."
 }

@@ -5,7 +5,7 @@ Auto Hatch is the machine-on automation layer for Idea Hatching. It does not rea
 ## Modes
 
 ### periodic
-Runs one advance per time period, then exits.
+Wakes up at a time interval, runs one advance, then exits.
 
 Example:
 ```text

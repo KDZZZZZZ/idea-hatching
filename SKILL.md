@@ -7,7 +7,7 @@ argument-hint: "hatch \"<idea>\" | advance [<slug>] | list | show <slug> | incub
 
 # Idea Hatching
 
-Idea Hatching stores every idea globally, advances it in small trustworthy increments, and avoids flooding the user with half-baked plans. The durable workspace is `~/idea-hatching/`; it is not tied to OMC and does not write `.omc/` state.
+Idea Hatching stores every idea globally, advances it in small trustworthy increments, and avoids flooding the user with half-baked plans. The durable workspace is `~/idea-hatching/`; it is global and independent of any project workspace.
 
 ## Core commands
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+AUTO=0
 MODE="periodic"
 EVERY="30m"
 UNINSTALL=0
@@ -7,6 +8,7 @@ STATUS=0
 DRY_RUN=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --auto) AUTO=1; shift ;;
     --mode) MODE="$2"; shift 2 ;;
     --every) EVERY="$2"; shift 2 ;;
     --uninstall|--stop) UNINSTALL=1; shift ;;
@@ -17,19 +19,30 @@ while [[ $# -gt 0 ]]; do
 done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-CLAUDE_SKILL_DIR="$HOME/.claude/skills/idea-hatching"
 HEARTBEAT="$SKILL_DIR/scripts/heartbeat.py"
-command -v python3 >/dev/null || { echo "python3 is required" >&2; exit 1; }
-if [[ "$STATUS" == 1 ]]; then python3 "$HEARTBEAT" --status; exit 0; fi
-if [[ "$UNINSTALL" == 1 ]]; then python3 "$HEARTBEAT" --stop; echo "Disable/remove cron/launchd/systemd task manually if installed."; exit 0; fi
-python3 "$SKILL_DIR/scripts/package.py" --sync >/dev/null
-python3 "$SKILL_DIR/scripts/init_workspace.py" >/dev/null
-python3 "$HEARTBEAT" --mode "$MODE" --every "$EVERY" --status >/dev/null
-if [[ "$DRY_RUN" == 1 ]]; then echo "DRY RUN: would install Auto Hatch mode=$MODE every=$EVERY"; exit 0; fi
+PYTHON_BIN=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import sys" >/dev/null 2>&1; then
+    PYTHON_BIN="$candidate"
+    break
+  fi
+done
+if [[ -z "$PYTHON_BIN" ]]; then echo "python 3 is required" >&2; exit 1; fi
+if [[ "$STATUS" == 1 ]]; then "$PYTHON_BIN" "$HEARTBEAT" --status; exit 0; fi
+if [[ "$UNINSTALL" == 1 ]]; then "$PYTHON_BIN" "$HEARTBEAT" --stop; echo "Disable/remove cron/launchd/systemd task manually if installed."; exit 0; fi
+if [[ "$DRY_RUN" == 1 ]]; then
+  if [[ "$AUTO" == 1 ]]; then echo "DRY RUN: would enable Auto Hatch mode=$MODE every=$EVERY";
+  else echo "DRY RUN: would install/sync the skill and initialize ~/idea-hatching only. Auto Mode would remain off."; fi
+  exit 0
+fi
+"$PYTHON_BIN" "$SKILL_DIR/scripts/package.py" --sync >/dev/null
+"$PYTHON_BIN" "$SKILL_DIR/scripts/init_workspace.py" >/dev/null
+if [[ "$AUTO" == 0 ]]; then echo "Installed Idea Hatching skill and initialized workspace. Auto Mode is off."; exit 0; fi
+"$PYTHON_BIN" "$HEARTBEAT" --mode "$MODE" --every "$EVERY" --status >/dev/null
 cat <<EOF
-Installed skill files and heartbeat config.
+Configured Auto Hatch mode=$MODE every=$EVERY.
 Automatic OS scheduling is platform-specific:
-- periodic: run: python3 "$HEARTBEAT" --once
-- always:   run: python3 "$HEARTBEAT" --loop
+- periodic: run: "$PYTHON_BIN" "$HEARTBEAT" --once
+- always:   run: "$PYTHON_BIN" "$HEARTBEAT" --loop
 Use cron/systemd/launchd to schedule these commands.
 EOF
