@@ -1,6 +1,19 @@
-# Idea Hatching
+# Idea Hatching / idea孵化器
 
-Idea Hatching is a Claude Code skill for capturing many ideas without letting them crowd your attention. It stores ideas globally, advances them in small bounded steps, and only surfaces a complete plan when the idea is both feasible and credible.
+> A low-noise Claude Code skill for people with too many ideas.
+
+Most AI tools rush to generate plans. Idea Hatching does the opposite: it captures every idea, develops it slowly with evidence, and only surfaces a complete plan when it becomes feasible and credible.
+
+It is for people who:
+
+- have many side project, paper, product, or research ideas competing for attention;
+- do not want every spark to immediately become a noisy pile of half-baked plans;
+- want Claude to keep advancing ideas in small background steps instead of expanding everything at once;
+- want each idea to grow into a credible mind model, evidence library, and landing path.
+
+Idea Hatching is not an idea manager. It is an idea incubator.
+
+It is not about generating plans faster. It is about developing ideas more slowly, quietly, and credibly.
 
 The runtime workspace is:
 
