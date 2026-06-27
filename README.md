@@ -63,36 +63,18 @@ Before that, normal advances return only a one-line status.
 
 ## Installation
 
-Installation copies the skill files into your global Claude Code skill directory and initializes `~/idea-hatching/` if needed. It does **not** turn on Auto Mode by itself.
-
-### Windows
-
-```powershell
-cd path\to\idea-hatching
-.\scripts\install.ps1 -DryRun
-.\scripts\install.ps1
-```
-
-### macOS / Linux
+Install with one command. This copies the skill into the default Claude Code global skill directory and initializes `~/idea-hatching/`. It does **not** enable Auto Mode.
 
 ```bash
-cd path/to/idea-hatching
-./scripts/install.sh --dry-run
-./scripts/install.sh
-```
-
-### Manual sync for development
-
-```bash
-python scripts/package.py --check
-python scripts/package.py --sync
+npx github:KDZZZZZZ/idea-hatching install
 ```
 
 Behavior:
 
-- `--check` validates the expected file structure.
-- `--sync` copies the repo version into `~/.claude/skills/idea-hatching/`.
-- Install commands also create `~/idea-hatching/INDEX.md` and `~/idea-hatching/heartbeat.json` if missing.
+- Installs the skill to `~/.claude/skills/idea-hatching/`.
+- Creates `~/idea-hatching/INDEX.md` if missing.
+- Creates `~/idea-hatching/heartbeat.json` if missing.
+- Leaves Auto Mode off.
 
 ---
 
@@ -203,8 +185,8 @@ Periodic mode means: **wake up at a time interval, run exactly one `advance`, th
 Script equivalent:
 
 ```bash
-python scripts/heartbeat.py --enable --mode periodic --every 30m
-python scripts/heartbeat.py --install-scheduler
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --enable --mode periodic --every 30m
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --install-scheduler
 ```
 
 Behavior:
@@ -226,8 +208,8 @@ Always mode means: **start one resident loop while the machine/session is on**.
 Script equivalent:
 
 ```bash
-python scripts/heartbeat.py --enable --mode always --every 10m
-python scripts/heartbeat.py --install-scheduler
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --enable --mode always --every 10m
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --install-scheduler
 ```
 
 Behavior:
@@ -252,7 +234,7 @@ advance → cooldown → advance → cooldown → ...
 Script equivalent:
 
 ```bash
-python scripts/heartbeat.py --status
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --status
 ```
 
 Behavior:
@@ -271,7 +253,7 @@ Behavior:
 Script equivalent:
 
 ```bash
-python scripts/heartbeat.py --stop
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --stop
 ```
 
 Behavior:
@@ -296,15 +278,19 @@ Creates the workspace and, optionally, captures one idea without LLM reasoning.
 
 ### `scripts/heartbeat.py`
 
+After installation, use the installed script path:
+
 ```bash
-python scripts/heartbeat.py --once
-python scripts/heartbeat.py --loop
-python scripts/heartbeat.py --enable --mode periodic --every 30m
-python scripts/heartbeat.py --install-scheduler
-python scripts/heartbeat.py --status
-python scripts/heartbeat.py --stop
-python scripts/heartbeat.py --once --dry-run
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --once
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --loop
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --enable --mode periodic --every 30m
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --install-scheduler
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --status
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --stop
+python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --once --dry-run
 ```
+
+From a local checkout, replace `~/.claude/skills/idea-hatching/scripts/heartbeat.py` with `scripts/heartbeat.py`.
 
 Runs or inspects the Auto Mode heartbeat.
 

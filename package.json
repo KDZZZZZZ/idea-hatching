@@ -1,0 +1,17 @@
+{
+  "name": "idea-hatching",
+  "version": "0.1.0",
+  "description": "Claude Code skill for idea incubation and Auto Hatch heartbeat.",
+  "bin": {
+    "idea-hatching": "bin/idea-hatching.js"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "references",
+    "scripts",
+    "templates",
+    "bin"
+  ],
+  "license": "MIT"
+}

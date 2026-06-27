@@ -24,6 +24,8 @@ REQUIRED = [
     "templates/log.md",
     "templates/heartbeat.json",
     "README.md",
+    "package.json",
+    "bin/idea-hatching.js",
 ]
 
 
