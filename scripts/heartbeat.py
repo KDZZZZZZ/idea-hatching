@@ -173,7 +173,69 @@ def stop(cfg: dict, config_path: Path) -> int:
         if not pid_alive(pid):
             lock.unlink(missing_ok=True)
             log(cfg, "stop: cleared stale lock")
-    print("Auto Hatch disabled in heartbeat.json. Use install script to remove OS scheduler tasks if needed.")
+    print("Auto Hatch disabled in heartbeat.json and scheduler tasks removed where supported.")
+    return 0
+
+
+def current_python() -> str:
+    return sys.executable or "python"
+
+
+def install_scheduler(cfg: dict, config_path: Path, dry_run: bool = False) -> int:
+    """Install local OS scheduler tasks for Auto Mode where supported."""
+    system = platform.system().lower()
+    mode = cfg.get("mode", "periodic")
+    every = cfg.get("every", "30m")
+    script = Path(__file__).resolve()
+    py = current_python()
+    if dry_run:
+        print(f"DRY_RUN install scheduler mode={mode} every={every}")
+        return 0
+    if system.startswith("win"):
+        uninstall_scheduler(cfg, dry_run=False, quiet=True)
+        if mode == "periodic":
+            minutes = interval_to_minutes(every)
+            cmd = [
+                "schtasks", "/Create", "/TN", "IdeaHatchingPeriodic",
+                "/SC", "MINUTE", "/MO", str(minutes),
+                "/TR", f'"{py}" "{script}" --once', "/F",
+            ]
+            subprocess.run(cmd, check=True)
+            print(f"Installed IdeaHatchingPeriodic every {every}.")
+        elif mode == "always":
+            cmd = [
+                "schtasks", "/Create", "/TN", "IdeaHatchingAlways",
+                "/SC", "ONLOGON", "/TR", f'"{py}" "{script}" --loop', "/F",
+            ]
+            subprocess.run(cmd, check=True)
+            print(f"Installed IdeaHatchingAlways on logon with cooldown {every}.")
+        else:
+            raise ValueError(f"Unsupported mode: {mode}")
+        return 0
+    print("OS scheduler auto-install is not implemented for this platform. Use cron/systemd/launchd to run heartbeat.py --once or --loop.")
+    return 0
+
+
+def interval_to_minutes(value: str) -> int:
+    seconds = parse_interval(value)
+    if seconds < 60:
+        raise ValueError("Windows Task Scheduler periodic mode requires at least 1 minute")
+    return max(1, seconds // 60)
+
+
+def uninstall_scheduler(cfg: dict, dry_run: bool = False, quiet: bool = False) -> int:
+    system = platform.system().lower()
+    if dry_run:
+        print("DRY_RUN uninstall scheduler")
+        return 0
+    if system.startswith("win"):
+        for name in ["IdeaHatchingPeriodic", "IdeaHatchingAlways"]:
+            subprocess.run(["schtasks", "/Delete", "/TN", name, "/F"], capture_output=True, text=True)
+        if not quiet:
+            print("Removed Auto Hatch Windows scheduler tasks if present.")
+        return 0
+    if not quiet:
+        print("Remove cron/systemd/launchd tasks manually if configured.")
     return 0
 
 
@@ -185,6 +247,9 @@ def main() -> int:
     p.add_argument("--once", action="store_true")
     p.add_argument("--loop", action="store_true")
     p.add_argument("--status", action="store_true")
+    p.add_argument("--enable", action="store_true")
+    p.add_argument("--install-scheduler", action="store_true")
+    p.add_argument("--uninstall-scheduler", action="store_true")
     p.add_argument("--stop", action="store_true")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
@@ -193,15 +258,21 @@ def main() -> int:
     cfg = load_config(config_path)
     if args.mode:
         cfg["mode"] = args.mode
-        cfg["enabled"] = True
     if args.every:
         cfg["every"] = args.every
+    if args.enable or args.install_scheduler:
         cfg["enabled"] = True
-    save_config(config_path, cfg)
+    if not args.dry_run:
+        save_config(config_path, cfg)
 
     if args.status:
         return status(cfg)
+    if args.install_scheduler:
+        return install_scheduler(cfg, config_path, args.dry_run)
+    if args.uninstall_scheduler:
+        return uninstall_scheduler(cfg, args.dry_run)
     if args.stop:
+        uninstall_scheduler(cfg, args.dry_run, quiet=True)
         return stop(cfg, config_path)
     if args.once:
         return run_once(cfg, args.dry_run)

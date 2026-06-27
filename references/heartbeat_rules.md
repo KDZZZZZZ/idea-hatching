@@ -37,7 +37,7 @@ Routine advances remain silent and are recorded in logs/journals only.
 
 ## Scheduler hosts
 
-Preferred local hosts:
+Preferred local hosts (installed via `scripts/heartbeat.py --install-scheduler` where supported):
 - Windows: Task Scheduler via `scripts/install.ps1`
 - macOS: launchd via `scripts/install.sh` (planned/basic)
 - Linux: systemd user timer or cron via `scripts/install.sh` (planned/basic)

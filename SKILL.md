@@ -16,8 +16,8 @@ Idea Hatching stores every idea globally, advances it in small trustworthy incre
 - `list` / `status` — read `~/idea-hatching/INDEX.md` and show all ideas.
 - `show <slug>` — show that idea's current `mind-model.md`.
 - `incubate --cron "<spec>"` — optional Claude Code session-only cron; expires with the session / scheduled-task lifetime.
-- `incubate --auto --mode periodic --every <interval>` — install/configure a machine-on periodic heartbeat that runs one `advance` each interval.
-- `incubate --auto --mode always --every <interval>` — install/configure a machine-on loop heartbeat: `advance → cooldown → advance`.
+- `incubate --auto --mode periodic --every <interval>` — configure Auto Mode to wake on an interval and run one `advance`.
+- `incubate --auto --mode always --every <interval>` — configure Auto Mode as a resident loop: `advance → cooldown → advance`.
 - `incubate --status` — inspect heartbeat config, lock, log, and OS scheduler status.
 - `incubate --stop` — stop Auto Hatch tasks and clear stale lock; never delete ideas.
 
@@ -32,9 +32,9 @@ Idea Hatching stores every idea globally, advances it in small trustworthy incre
 Use scripts through `${CLAUDE_SKILL_DIR}/scripts/...` when deterministic filesystem or scheduler work is needed.
 
 - `scripts/init_workspace.py` initializes `~/idea-hatching/` and can hatch one idea without LLM reasoning.
-- `scripts/heartbeat.py` implements Auto Hatch heartbeat: `--once`, `--loop`, `--status`, `--stop`, `--dry-run`.
-- `scripts/install.ps1` installs/configures Auto Hatch on Windows Task Scheduler.
-- `scripts/install.sh` installs/configures Auto Hatch on macOS/Linux where supported.
+- `scripts/heartbeat.py` implements Auto Hatch heartbeat: `--enable`, `--install-scheduler`, `--once`, `--loop`, `--status`, `--stop`, `--dry-run`.
+- `scripts/install.ps1` installs/syncs the skill on Windows; Auto Mode is configured separately through `heartbeat.py`.
+- `scripts/install.sh` installs/syncs the skill on macOS/Linux; Auto Mode is configured separately through `heartbeat.py`.
 - `scripts/package.py` validates the skill structure and can sync files.
 
 ## Advance invariant summary

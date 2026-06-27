@@ -200,16 +200,17 @@ Periodic mode means: **wake up at a time interval, run exactly one `advance`, th
 /idea-hatching incubate --auto --mode periodic --every 30m
 ```
 
-Windows installer equivalent:
+Script equivalent:
 
-```powershell
-.\scripts\install.ps1 -Auto -Mode periodic -Every 30m
+```bash
+python scripts/heartbeat.py --enable --mode periodic --every 30m
+python scripts/heartbeat.py --install-scheduler
 ```
 
 Behavior:
 
 - Creates/updates the heartbeat config.
-- On Windows, installs a Task Scheduler task named `IdeaHatchingPeriodic`.
+- On Windows, `--install-scheduler` installs a Task Scheduler task named `IdeaHatchingPeriodic`.
 - Each tick runs one `advance`.
 - If another advance is already running, the tick exits quietly.
 - It does not keep a resident loop alive between ticks.
@@ -222,15 +223,16 @@ Always mode means: **start one resident loop while the machine/session is on**.
 /idea-hatching incubate --auto --mode always --every 10m
 ```
 
-Windows installer equivalent:
+Script equivalent:
 
-```powershell
-.\scripts\install.ps1 -Auto -Mode always -Every 10m
+```bash
+python scripts/heartbeat.py --enable --mode always --every 10m
+python scripts/heartbeat.py --install-scheduler
 ```
 
 Behavior:
 
-- Starts on login through the OS scheduler.
+- On Windows, `--install-scheduler` starts the loop on login through Task Scheduler.
 - Runs this loop:
 
 ```text
@@ -266,10 +268,10 @@ Behavior:
 /idea-hatching incubate --stop
 ```
 
-Windows installer equivalent:
+Script equivalent:
 
-```powershell
-.\scripts\install.ps1 -Uninstall
+```bash
+python scripts/heartbeat.py --stop
 ```
 
 Behavior:
@@ -297,6 +299,8 @@ Creates the workspace and, optionally, captures one idea without LLM reasoning.
 ```bash
 python scripts/heartbeat.py --once
 python scripts/heartbeat.py --loop
+python scripts/heartbeat.py --enable --mode periodic --every 30m
+python scripts/heartbeat.py --install-scheduler
 python scripts/heartbeat.py --status
 python scripts/heartbeat.py --stop
 python scripts/heartbeat.py --once --dry-run
