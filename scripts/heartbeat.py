@@ -127,14 +127,36 @@ def resolve_claude_command() -> str | None:
     return shutil.which("claude")
 
 
+def claude_base_args() -> list[str]:
+    claude = resolve_claude_command()
+    if not claude:
+        raise FileNotFoundError("Claude Code CLI not found on PATH. Set IDEA_HATCHING_CLAUDE_COMMAND or ensure claude.cmd/claude.exe is available.")
+    skill_dir = Path.home() / ".claude" / "skills" / "idea-hatching"
+    workspace = Path.home() / "idea-hatching"
+    return [
+        claude,
+        "--add-dir", str(workspace),
+        "--add-dir", str(skill_dir),
+        "--permission-mode", "acceptEdits",
+    ]
+
+
 def default_advance_command() -> list[str]:
     env = os.environ.get("IDEA_HATCHING_ADVANCE_COMMAND")
     if env:
         return shlex.split(env)
-    claude = resolve_claude_command()
-    if not claude:
-        raise FileNotFoundError("Claude Code CLI not found on PATH. Set IDEA_HATCHING_CLAUDE_COMMAND or ensure claude.cmd/claude.exe is available.")
-    return [claude, "-p", "/idea-hatching advance"]
+    return claude_base_args() + ["-p", "/idea-hatching advance"]
+
+
+def run_text(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        **kwargs,
+    )
 
 
 def run_once(cfg: dict, dry_run: bool = False) -> int:
@@ -147,7 +169,7 @@ def run_once(cfg: dict, dry_run: bool = False) -> int:
             print("DRY_RUN " + " ".join(shlex.quote(x) for x in cmd))
             return 0
         log(cfg, "tick: executing advance")
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=parse_interval(cfg.get("timeout", "30m")))
+        result = run_text(cmd, input="", timeout=parse_interval(cfg.get("timeout", "30m")))
         out = (result.stdout or "") + (result.stderr or "")
         log(cfg, f"advance exit={result.returncode} output={out.strip()[:1000]}")
         if result.returncode != 0:
@@ -171,7 +193,7 @@ def check_connectivity(cfg: dict) -> int:
         return 2
     print(f"OK claude_cli: {claude}")
     try:
-        version = subprocess.run([claude, "--version"], capture_output=True, text=True, timeout=30)
+        version = run_text([claude, "--version"], timeout=30)
         if version.returncode == 0:
             print("OK claude_version: " + (version.stdout or version.stderr).strip()[:200])
         else:
@@ -181,7 +203,7 @@ def check_connectivity(cfg: dict) -> int:
         ok = False
         print(f"FAIL claude_version: {e}")
     try:
-        probe = subprocess.run([claude, "-p", "Reply exactly IDEA_HATCHING_CHECK_OK"], capture_output=True, text=True, timeout=parse_interval(cfg.get("checkTimeout", "5m")))
+        probe = run_text(claude_base_args() + ["-p", "Reply exactly IDEA_HATCHING_CHECK_OK"], input="", timeout=parse_interval(cfg.get("checkTimeout", "5m")))
         out = ((probe.stdout or "") + (probe.stderr or "")).strip()
         if probe.returncode == 0 and "IDEA_HATCHING_CHECK_OK" in out:
             print("OK claude_live: received IDEA_HATCHING_CHECK_OK")
@@ -191,6 +213,17 @@ def check_connectivity(cfg: dict) -> int:
     except Exception as e:
         ok = False
         print(f"FAIL claude_live: {e}")
+    try:
+        skill_probe = run_text(claude_base_args() + ["-p", "/idea-hatching list"], input="", timeout=parse_interval(cfg.get("checkTimeout", "5m")))
+        out = ((skill_probe.stdout or "") + (skill_probe.stderr or "")).strip()
+        if skill_probe.returncode == 0 and ("slug" in out.lower() or "idea" in out.lower() or "incubating" in out.lower()):
+            print("OK idea_hatching_skill: /idea-hatching list succeeded")
+        else:
+            ok = False
+            print(f"FAIL idea_hatching_skill: exit={skill_probe.returncode} output={out[:1000]}")
+    except Exception as e:
+        ok = False
+        print(f"FAIL idea_hatching_skill: {e}")
     return 0 if ok else 2
 
 
