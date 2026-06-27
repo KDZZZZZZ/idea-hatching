@@ -166,12 +166,6 @@ Auto Mode runs while your machine and scheduler are available. It does not reaso
 /idea-hatching advance
 ```
 
-Routine advances stay silent. Notifications are reserved for:
-
-- an idea becoming `hatched`,
-- an idea becoming `blocked`,
-- configuration or runtime errors.
-
 Auto Mode uses a lock file to prevent overlapping runs.
 
 ### Periodic mode
