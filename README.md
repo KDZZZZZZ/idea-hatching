@@ -182,17 +182,10 @@ Periodic mode means: **wake up at a time interval, run exactly one `advance`, th
 /idea-hatching incubate --auto --mode periodic --every 30m
 ```
 
-Script equivalent:
-
-```bash
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --enable --mode periodic --every 30m
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --install-scheduler
-```
-
 Behavior:
 
 - Creates/updates the heartbeat config.
-- On Windows, `--install-scheduler` installs a Task Scheduler task named `IdeaHatchingPeriodic`.
+- On Windows, this sets up a Task Scheduler task named `IdeaHatchingPeriodic`.
 - Each tick runs one `advance`.
 - If another advance is already running, the tick exits quietly.
 - It does not keep a resident loop alive between ticks.
@@ -205,16 +198,9 @@ Always mode means: **start one resident loop while the machine/session is on**.
 /idea-hatching incubate --auto --mode always --every 10m
 ```
 
-Script equivalent:
-
-```bash
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --enable --mode always --every 10m
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --install-scheduler
-```
-
 Behavior:
 
-- On Windows, `--install-scheduler` starts the loop on login through Task Scheduler.
+- On Windows, this sets up a login-started Task Scheduler task for the loop.
 - Runs this loop:
 
 ```text
@@ -231,12 +217,6 @@ advance → cooldown → advance → cooldown → ...
 /idea-hatching incubate --status
 ```
 
-Script equivalent:
-
-```bash
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --status
-```
-
 Behavior:
 
 - Shows heartbeat config.
@@ -250,12 +230,6 @@ Behavior:
 /idea-hatching incubate --stop
 ```
 
-Script equivalent:
-
-```bash
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --stop
-```
-
 Behavior:
 
 - Disables heartbeat config.
@@ -265,50 +239,10 @@ Behavior:
 
 ---
 
-## Scripts
+## Development
 
-### `scripts/init_workspace.py`
-
-```bash
-python scripts/init_workspace.py
-python scripts/init_workspace.py --hatch "<idea>"
-```
-
-Creates the workspace and, optionally, captures one idea without LLM reasoning.
-
-### `scripts/heartbeat.py`
-
-After installation, use the installed script path:
-
-```bash
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --once
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --loop
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --enable --mode periodic --every 30m
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --install-scheduler
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --status
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --stop
-python ~/.claude/skills/idea-hatching/scripts/heartbeat.py --once --dry-run
-```
-
-From a local checkout, replace `~/.claude/skills/idea-hatching/scripts/heartbeat.py` with `scripts/heartbeat.py`.
-
-Runs or inspects the Auto Mode heartbeat.
-
-### `scripts/package.py`
+For maintainers only:
 
 ```bash
 python scripts/package.py --check
-python scripts/package.py --sync
-python scripts/package.py --zip idea-hatching.zip
-```
-
-Validates, syncs, or packages the skill.
-
----
-
-## Development checks
-
-```bash
-python scripts/package.py --check
-python scripts/heartbeat.py --once --dry-run
 ```
